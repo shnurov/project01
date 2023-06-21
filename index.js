@@ -7,11 +7,10 @@ import {
   loginValidation,
   postCreateValidation,
 } from "./validations.js";
-import checkAuth from "./utils/checkAuth.js";
 
-import * as UserController from "./controllers/UserController.js";
-import * as PostController from "./controllers/PostController.js";
-import handleValidationErrors from "./utils/handleValidationErrors.js";
+import { handleValidationErrors, checkAuth } from "./utils/index.js";
+
+import { UserController, PostController } from "./controllers/index.js";
 
 //ПОДКЛЮЧЕНИЕ К БД
 mongoose
@@ -40,7 +39,7 @@ const upload = multer({ storage });
 //научить экспресс видеть json
 app.use(express.json());
 //научить экспресс видеть картинки в папке uploads
-app.use('/uploads', express.static('uploads'));
+app.use("/uploads", express.static("uploads"));
 
 // ЗАГРУЗКА ФАЙЛА
 app.post("/upload", checkAuth, upload.single("image"), (req, res) => {
@@ -50,20 +49,42 @@ app.post("/upload", checkAuth, upload.single("image"), (req, res) => {
 });
 
 // АВТОРИЗАЦИЯ
-app.post("/auth/login", loginValidation, handleValidationErrors, UserController.login);
+app.post(
+  "/auth/login",
+  loginValidation,
+  handleValidationErrors,
+  UserController.login
+);
 
 // РЕГИСТРАЦИЯ
-app.post("/auth/register", registerValidation, handleValidationErrors, UserController.register);
+app.post(
+  "/auth/register",
+  registerValidation,
+  handleValidationErrors,
+  UserController.register
+);
 
 // ЗАПРОС ИНФЫ
 app.get("/auth/me", checkAuth, UserController.getMe);
 
 // СТАТЬИ
-app.post("/posts", checkAuth, postCreateValidation, handleValidationErrors, PostController.create);
+app.post(
+  "/posts",
+  checkAuth,
+  postCreateValidation,
+  handleValidationErrors,
+  PostController.create
+);
 app.get("/posts", PostController.getAll);
 app.get("/posts/:id", PostController.getOne);
 app.delete("/posts/:id", checkAuth, PostController.remove);
-app.patch("/posts/:id", checkAuth, postCreateValidation, handleValidationErrors, PostController.update);
+app.patch(
+  "/posts/:id",
+  checkAuth,
+  postCreateValidation,
+  handleValidationErrors,
+  PostController.update
+);
 
 app.listen(4444, (err) => {
   if (err) {
