@@ -8,7 +8,7 @@ import * as UserController from "./controllers/UserController.js";
 import * as PostController from "./controllers/PostController.js";
 
 //ПОДКЛЮЧЕНИЕ К БД
-mongoose
+mongoose.set('strictQuery', false)
   .connect(
     "mongodb+srv://admin:12345Aa@cluster0.ytge6vp.mongodb.net/blog?retryWrites=true&w=majority"
   )
@@ -31,10 +31,10 @@ app.get("/auth/me", checkAuth, UserController.getMe);
 
 // СТАТЬИ
 app.post("/posts", checkAuth, postCreateValidation, PostController.create);
-// app.get("/posts", checkAuth, PostController.getAll);
-// app.get("/posts:id", checkAuth, PostController.getOne);
-// app.delete("/posts:id", checkAuth, PostController.remove);
-// app.patch("/posts:id", checkAuth, PostController.update);
+app.get("/posts", PostController.getAll);
+app.get("/posts/:id", PostController.getOne);
+app.delete("/posts/:id", checkAuth, PostController.remove);
+app.patch("/posts/:id", checkAuth, PostController.update);
 
 app.listen(4444, (err) => {
   if (err) {
