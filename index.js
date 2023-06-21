@@ -7,6 +7,7 @@ import { validationResult } from "express-validator";
 import { registerValidation } from "./valifations/auth.js";
 
 import UserModel from "./models/User.js";
+import checkAuth from "./utils/checkAuth.js";
 
 mongoose
   .connect(
@@ -20,47 +21,49 @@ const app = express();
 app.use(express.json());
 
 // АВТОРИЗАЦИЯ
-app.post('/auth/login', async (req, res) => {
-    try {
-        const user = await UserModel.findOne({ email: req.body.email });
+app.post("/auth/login", async (req, res) => {
+  try {
+    const user = await UserModel.findOne({ email: req.body.email });
 
-        if (!user) {
-            return res.status(404).json({
-                message: 'Пользователь не найден',
-            });
-        }
-
-        const isValidPass = await bcrypt.compare(req.body.password, user._doc.passwordHash);
-
-        if (!isValidPass) {
-          return res.status(403).json({
-            message: 'Неверный логин или пароль',
-          });
-        }
-
-        const token = jwt.sign(
-          {
-              _id: user._id,
-          },
-          'secret123',
-          {
-              expiresIn: '30d',
-          },
-      );
-
-    const {passwordHash, ...userData} = user._doc;
-
-    res.json({
-        ...userData,
-        token,
-    });
-
-    } catch (err) {
-      console.log(err);
-      res.status(500).json({
-        message: "Не удалось авторизоваться",
+    if (!user) {
+      return res.status(404).json({
+        message: "Пользователь не найден",
       });
     }
+
+    const isValidPass = await bcrypt.compare(
+      req.body.password,
+      user._doc.passwordHash
+    );
+
+    if (!isValidPass) {
+      return res.status(403).json({
+        message: "Неверный логин или пароль",
+      });
+    }
+
+    const token = jwt.sign(
+      {
+        _id: user._id,
+      },
+      "secret123",
+      {
+        expiresIn: "30d",
+      }
+    );
+
+    const { passwordHash, ...userData } = user._doc;
+
+    res.json({
+      ...userData,
+      token,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      message: "Не удалось авторизоваться",
+    });
+  }
 });
 
 // РЕГИСТРАЦИЯ
@@ -85,20 +88,20 @@ app.post("/auth/register", registerValidation, async (req, res) => {
     const user = await doc.save();
 
     const token = jwt.sign(
-        {
-            _id: user._id,
-        },
-        'secret123',
-        {
-            expiresIn: '30d',
-        },
+      {
+        _id: user._id,
+      },
+      "secret123",
+      {
+        expiresIn: "30d",
+      }
     );
 
-    const {passwordHash, ...userData} = user._doc;
+    const { passwordHash, ...userData } = user._doc;
 
     res.json({
-        ...userData,
-        token,
+      ...userData,
+      token,
     });
   } catch (err) {
     console.log(err);
@@ -109,10 +112,25 @@ app.post("/auth/register", registerValidation, async (req, res) => {
 });
 
 // ЗАПРОС ИНФЫ
-app.get('/auth/me', (req, res) => {
+app.get("/auth/me", checkAuth, async (req, res) => {
   try {
+    const user = await UserModel.findById(req.userId);
 
-  } catch (err) {}
+    if (!user) {
+      return res.status(404).json({
+        message: "Пользоывтель не найден",
+      });
+    }
+
+    const { passwordHash, ...userData } = user._doc;
+
+    res.json(userData);
+  } catch (err) {
+    console.log(err);
+    res.status(403).json({
+      message: "Нет доступа",
+    });
+  }
 });
 
 app.listen(4444, (err) => {
